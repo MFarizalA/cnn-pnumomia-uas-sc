@@ -1,5 +1,4 @@
-from tensorflow.keras.layers import Flatten, Conv2D, MaxPool2D, Dense, Input
-from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.layers import Flatten, Conv2D, MaxPool2D, Dense, Dropout
 from tensorflow.keras.models import Model, Sequential
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.preprocessing import OneHotEncoder
@@ -7,6 +6,8 @@ from sklearn.preprocessing import OneHotEncoder
 import os
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
+
 
 def readNormal(normPath):
     norm_files = np.array(os.listdir(normPath))
@@ -52,18 +53,25 @@ def training(X_train):
         MaxPool2D((2, 2)),
         Flatten(),
         Dense(100, activation='relu'),
+        Dropout(0.5),
         Dense(50, activation='relu'),
-        Dense(25, activation='relu'),
+        Dropout(0.5),
+        Dense(30, activation='relu'),
+        Dropout(0.5),   
         Dense(3, activation='softmax'),
     ])
 
-def imageDataGenerator (X_train):
+def imageDataGenerator (X_train, y_train_one_hot):
     generate =  ImageDataGenerator(
-        rotation_range = 15,
-        zoom_range = 0.5,
-        width_shift_range = 0.5,
-        height_shift_range = 0.5,
+        rotation_range = 5,
+        zoom_range = 0.05,
+        width_shift_range = 0.05,
+        height_shift_range = 0.05,
         )
+
+    X_train = np.array(X_train)
+    y_train_one_hot = np.array(y_train_one_hot)
+
     generate.fit(X_train)
 
     return generate.flow(X_train, y_train_one_hot, batch_size=32)
@@ -102,6 +110,6 @@ if __name__ == '__main__':
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
 
-    model.fit_generator(imageDataGenerator(X_train), epochs=15, validation_data=(X_test, y_test_one_hot))
-
+    perf = model.fit_generator(imageDataGenerator(X_train, y_train_one_hot), epochs=25, validation_data=(X_test, y_test_one_hot))
+    
     model.save('pneumonia-uas-sc-cnn.h5')
