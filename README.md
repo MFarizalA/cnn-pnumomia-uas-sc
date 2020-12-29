@@ -11,4 +11,5 @@
   
  ## Accuracy
   - acc : 0.74
+  - val_acc : 0.69
   
